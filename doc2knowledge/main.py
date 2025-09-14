@@ -2,6 +2,8 @@ import os
 import shutil
 from fastapi import FastAPI, File, UploadFile
 from typing import List
+from .utils import extract_text_from_file, chunk_text
+from .vector_store import create_and_store_embeddings
 
 app = FastAPI()
 
@@ -18,15 +20,13 @@ async def startup_event():
 @app.post("/upload")
 async def upload_files(files: List[UploadFile] = File(...)):
     """
-    Uploads multiple files and saves them to the uploads directory.
+    Uploads multiple files, processes them, and stores their embeddings.
     """
-    filenames = []
     for file in files:
         if file.filename:
             # Basic sanitization
             filename = os.path.basename(file.filename)
             file_path = os.path.join(UPLOAD_DIR, filename)
-            filenames.append(filename)
 
             try:
                 with open(file_path, "wb") as buffer:
@@ -34,5 +34,10 @@ async def upload_files(files: List[UploadFile] = File(...)):
             finally:
                 file.file.close()
 
+            # Process the file
+            text = extract_text_from_file(file_path)
+            chunks = chunk_text(text)
+            create_and_store_embeddings(chunks, filename)
 
-    return {"status": "success", "message": "Files uploaded successfully.", "filenames": filenames}
+
+    return {"status": "success", "message": "Files successfully processed and indexed."}

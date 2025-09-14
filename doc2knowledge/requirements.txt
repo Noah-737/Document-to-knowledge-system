@@ -3,4 +3,7 @@ uvicorn[standard]
 python-multipart
 pypdf2
 beautifulsoup4
-langchain
+langchain==0.2.5
+faiss-cpu==1.8.0
+sentence-transformers==3.0.1
+langchain-community==0.2.5
