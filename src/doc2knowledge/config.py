@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     llm_model: str = "gemma-4-31b-it"
     top_k: int = Field(default=6, ge=1, le=50)
     max_upload_bytes: int = Field(default=20 * 1024 * 1024, ge=1)
+    processing_workers: int = Field(default=2, ge=1, le=32)
     gemini_api_key: SecretStr | None = Field(
         default=None,
         validation_alias=AliasChoices(
