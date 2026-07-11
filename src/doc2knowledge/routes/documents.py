@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import cast
 
+from anyio import CapacityLimiter, to_thread
 from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFile, status
 from pydantic import BaseModel, ConfigDict
 
@@ -39,6 +40,10 @@ def _service(request: Request) -> IngestionService:
     return cast(IngestionService, request.app.state.ingestion_service)
 
 
+def _limiter(request: Request) -> CapacityLimiter:
+    return cast(CapacityLimiter, request.app.state.processing_limiter)
+
+
 def _response(document: Document) -> DocumentResponse:
     return DocumentResponse.model_validate(document)
 
@@ -51,10 +56,12 @@ async def upload_document(
 ) -> UploadResponse:
     data = await file.read()
     try:
-        result = _service(request).ingest(
-            filename=file.filename or "document",
-            media_type=file.content_type or "application/octet-stream",
-            data=data,
+        result = await to_thread.run_sync(
+            _service(request).ingest,
+            file.filename or "document",
+            file.content_type or "application/octet-stream",
+            data,
+            limiter=_limiter(request),
         )
     except UploadTooLargeError as error:
         raise HTTPException(
