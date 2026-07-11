@@ -8,14 +8,15 @@ from pathlib import Path
 from uuid import UUID, uuid4, uuid5
 
 from doc2knowledge.domain import Chunk, Document, DocumentStatus
+from doc2knowledge.embeddings.base import EmbeddingService
 from doc2knowledge.ingestion.chunking import chunk_document
 from doc2knowledge.ingestion.extractors import (
     SUPPORTED_MEDIA_TYPES,
-    ExtractionError,
     UnsupportedMediaTypeError,
     extract_document,
 )
 from doc2knowledge.storage.metadata import MetadataRepository
+from doc2knowledge.storage.vectors import VectorRecord, VectorRepository
 
 
 class UploadTooLargeError(ValueError):
@@ -33,12 +34,16 @@ class IngestionService:
         self,
         repository: MetadataRepository,
         data_dir: Path,
+        embeddings: EmbeddingService,
+        vectors: VectorRepository,
         *,
         max_upload_bytes: int,
         chunk_size: int = 1000,
         chunk_overlap: int = 200,
     ) -> None:
         self._repository = repository
+        self._embeddings = embeddings
+        self._vectors = vectors
         self._documents_dir = data_dir / "documents"
         self._documents_dir.mkdir(parents=True, exist_ok=True)
         self._max_upload_bytes = max_upload_bytes
@@ -75,6 +80,7 @@ class IngestionService:
         document_dir = self._documents_dir / document.id
         document_dir.mkdir(parents=True, exist_ok=False)
         (document_dir / "source").write_bytes(data)
+        vectors_added = False
 
         try:
             extracted = extract_document(data, normalized_media_type)
@@ -94,6 +100,18 @@ class IngestionService:
                 )
                 for draft in drafts
             ]
+            embeddings = self._embeddings.embed_documents([chunk.text for chunk in chunks])
+            self._vectors.add(
+                [
+                    VectorRecord(
+                        chunk_id=chunk.id,
+                        document_id=document.id,
+                        vector=vector,
+                    )
+                    for chunk, vector in zip(chunks, embeddings, strict=True)
+                ]
+            )
+            vectors_added = True
             self._repository.save_chunks(chunks)
             ready = replace(
                 document,
@@ -102,7 +120,9 @@ class IngestionService:
             )
             self._repository.update_document(ready)
             return IngestionResult(document=ready, duplicate=False)
-        except ExtractionError as error:
+        except Exception as error:
+            if vectors_added:
+                self._vectors.delete_document(document.id)
             failed = replace(
                 document,
                 status=DocumentStatus.FAILED,
@@ -118,6 +138,10 @@ class IngestionService:
         return self._repository.list_documents()
 
     def delete_document(self, document_id: str) -> bool:
+        document = self._repository.get_document(document_id)
+        if document is None:
+            return False
+        self._vectors.delete_document(document_id)
         deleted = self._repository.delete_document(document_id)
         if deleted:
             shutil.rmtree(self._documents_dir / document_id, ignore_errors=True)
