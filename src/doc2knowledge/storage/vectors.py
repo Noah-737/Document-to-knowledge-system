@@ -134,9 +134,7 @@ class VectorRepository:
     def _matrix(self, vectors: list[list[float]]) -> NDArray[np.float32]:
         matrix = np.asarray(vectors, dtype=np.float32)
         if matrix.ndim != 2 or matrix.shape[1] != self._dimensions:
-            raise ValueError(
-                f"vectors must have {self._dimensions} dimensions; got {matrix.shape}"
-            )
+            raise ValueError(f"vectors must have {self._dimensions} dimensions; got {matrix.shape}")
         norms = np.linalg.norm(matrix, axis=1, keepdims=True)
         if np.any(norms == 0):
             raise ValueError("zero vectors cannot be indexed")
