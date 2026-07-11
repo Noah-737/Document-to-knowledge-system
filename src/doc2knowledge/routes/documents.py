@@ -93,7 +93,7 @@ async def upload_document(
         )
     except UploadTooLargeError as error:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail={"code": "upload_too_large", "message": str(error)},
         ) from error
     except UnsupportedMediaTypeError as error:
@@ -103,12 +103,12 @@ async def upload_document(
         ) from error
     except EmptyDocumentError as error:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={"code": "empty_document", "message": str(error)},
         ) from error
     except ExtractionError as error:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={"code": "extraction_failed", "message": str(error)},
         ) from error
 
