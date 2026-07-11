@@ -113,9 +113,7 @@ class MetadataRepository:
 
     def list_documents(self) -> list[Document]:
         with self._connect() as connection:
-            rows = connection.execute(
-                "SELECT * FROM documents ORDER BY created_at, id"
-            ).fetchall()
+            rows = connection.execute("SELECT * FROM documents ORDER BY created_at, id").fetchall()
         return [self._document_from_row(row) for row in rows]
 
     def save_chunks(self, chunks: Iterable[Chunk]) -> None:
