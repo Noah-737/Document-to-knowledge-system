@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from threading import Lock
-from typing import Any, Protocol, cast
+from typing import Protocol, cast
 
 import numpy as np
 from numpy.typing import NDArray
