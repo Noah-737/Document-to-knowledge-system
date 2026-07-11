@@ -115,16 +115,12 @@ def list_documents(request: Request) -> list[DocumentResponse]:
 def get_document(document_id: str, request: Request) -> DocumentResponse:
     document = _service(request).get_document(document_id)
     if document is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="document not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="document not found")
     return _response(document)
 
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_document(document_id: str, request: Request) -> Response:
     if not _service(request).delete_document(document_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="document not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="document not found")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
