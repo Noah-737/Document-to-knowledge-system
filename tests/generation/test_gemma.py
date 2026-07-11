@@ -83,6 +83,24 @@ def test_generation_abstains_without_evidence_without_calling_provider() -> None
     assert models.calls == []
 
 
+def test_generation_rejects_uncited_or_invented_sources() -> None:
+    uncited = GemmaGenerationService(
+        api_key="secret",
+        model_name="gemma-4-31b-it",
+        client_factory=lambda api_key: FakeClient(FakeModels("Alpha was founded in 2020.")),
+    )
+    invented = GemmaGenerationService(
+        api_key="secret",
+        model_name="gemma-4-31b-it",
+        client_factory=lambda api_key: FakeClient(FakeModels("Unsupported claim [S9].")),
+    )
+
+    with pytest.raises(GenerationProviderError, match="did not cite"):
+        uncited.generate("question", evidence())
+    with pytest.raises(GenerationProviderError, match="invalid citation"):
+        invented.generate("question", evidence())
+
+
 def test_missing_key_and_provider_failures_are_explicit() -> None:
     unconfigured = GemmaGenerationService(
         api_key=None,
