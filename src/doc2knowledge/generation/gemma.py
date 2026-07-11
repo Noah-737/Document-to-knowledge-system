@@ -105,4 +105,4 @@ class GemmaGenerationService(GenerationService):
                             "GEMINI_API_KEY is required for generated answers"
                         )
                     self._client = self._client_factory(self._api_key)
-        return cast(ClientLike, self._client)
+        return self._client
