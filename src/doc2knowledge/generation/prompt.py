@@ -24,9 +24,7 @@ def build_grounded_prompt(
             location.append(f"page {result.chunk.source_page}")
         if result.chunk.section:
             location.append(f"section {result.chunk.section}")
-        source_blocks.append(
-            f"[{label}] {' | '.join(location)}\n{result.chunk.text.strip()}"
-        )
+        source_blocks.append(f"[{label}] {' | '.join(location)}\n{result.chunk.text.strip()}")
 
     prompt = "\n\n".join(
         [
