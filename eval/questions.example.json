@@ -1,0 +1,12 @@
+{
+  "questions": [
+    {
+      "query": "When was Alpha founded?",
+      "relevant_filenames": ["alpha.txt"]
+    },
+    {
+      "query": "Which document discusses the Beta launch?",
+      "relevant_filenames": ["beta.txt"]
+    }
+  ]
+}
