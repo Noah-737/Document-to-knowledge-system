@@ -38,10 +38,11 @@ def test_valid_caller_request_id_is_preserved(tmp_path: Path) -> None:
 
 
 def test_unsafe_request_id_is_replaced(tmp_path: Path) -> None:
+    unsafe_request_id = "bad request id"
     response = make_client(tmp_path).get(
         "/health",
-        headers={"X-Request-ID": "bad request id\nlog injection"},
+        headers={"X-Request-ID": unsafe_request_id},
     )
 
-    assert response.headers["x-request-id"] != "bad request id\nlog injection"
+    assert response.headers["x-request-id"] != unsafe_request_id
     assert len(response.headers["x-request-id"]) == 36
