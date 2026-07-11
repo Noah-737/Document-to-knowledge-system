@@ -66,9 +66,7 @@ class GemmaGenerationService(GenerationService):
                 evidence=[],
             )
         if not self._api_key:
-            raise GenerationNotConfiguredError(
-                "GEMINI_API_KEY is required for generated answers"
-            )
+            raise GenerationNotConfiguredError("GEMINI_API_KEY is required for generated answers")
 
         prompt, sources = build_grounded_prompt(question, evidence)
         try:
@@ -89,7 +87,9 @@ class GemmaGenerationService(GenerationService):
         try:
             citations = resolve_citations(text, sources)
         except InvalidCitationError as error:
-            raise GenerationProviderError("generated answer contained an invalid citation") from error
+            raise GenerationProviderError(
+                "generated answer contained an invalid citation"
+            ) from error
 
         abstention = "not enough evidence" in text.lower()
         if not citations and not abstention:
