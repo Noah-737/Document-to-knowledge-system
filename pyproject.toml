@@ -62,6 +62,7 @@ module = [
     "sentence_transformers.*",
 ]
 ignore_missing_imports = true
+follow_imports = "skip"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
