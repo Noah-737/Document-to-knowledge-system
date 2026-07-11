@@ -25,7 +25,17 @@ jobs:
       - name: Ruff format
         run: ruff format --check .
       - name: Type check
-        run: mypy src
+        shell: bash
+        run: |
+          set -o pipefail
+          mypy src 2>&1 | tee mypy-output.txt
+      - name: Upload mypy output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mypy-output
+          path: mypy-output.txt
+          if-no-files-found: ignore
       - name: Test
         shell: bash
         run: |
