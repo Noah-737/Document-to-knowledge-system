@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from anyio import CapacityLimiter
 from fastapi import FastAPI
 
 from doc2knowledge import __version__
@@ -9,6 +10,7 @@ from doc2knowledge.embeddings.mixedbread import MixedbreadEmbeddingService
 from doc2knowledge.generation.base import GenerationService
 from doc2knowledge.generation.gemma import GemmaGenerationService
 from doc2knowledge.ingestion.service import IngestionService
+from doc2knowledge.observability import install_request_observability
 from doc2knowledge.retrieval.service import RetrievalService
 from doc2knowledge.routes.documents import router as documents_router
 from doc2knowledge.routes.query import router as query_router
@@ -59,6 +61,7 @@ def create_app(
         version=__version__,
         description="Document ingestion, retrieval, and grounded question answering.",
     )
+    install_request_observability(app)
     app.state.settings = resolved_settings
     app.state.metadata_repository = metadata
     app.state.embedding_service = embeddings
@@ -66,6 +69,7 @@ def create_app(
     app.state.ingestion_service = ingestion_service
     app.state.retrieval_service = retrieval_service
     app.state.generation_service = generation
+    app.state.processing_limiter = CapacityLimiter(resolved_settings.processing_workers)
     app.include_router(documents_router)
     app.include_router(search_router)
     app.include_router(query_router)
@@ -76,6 +80,18 @@ def create_app(
             "status": "ok",
             "service": "doc2knowledge",
             "version": __version__,
+        }
+
+    @app.get("/ready", tags=["system"])
+    def ready() -> dict[str, str | int | bool]:
+        return {
+            "status": "ready",
+            "embedding_model": embeddings.model_name,
+            "embedding_dimensions": embeddings.dimensions,
+            "llm_model": resolved_settings.llm_model,
+            "generation_configured": resolved_settings.gemini_api_key is not None,
+            "processing_workers": resolved_settings.processing_workers,
+            "indexed_vectors": vectors.size,
         }
 
     return app
