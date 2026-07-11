@@ -48,7 +48,7 @@ class VectorRepository:
         self._index_path = self._path / "index.faiss"
         self._mapping_path = self._path / "mapping.json"
         self._manifest_path = self._path / "manifest.json"
-        self._index = faiss.IndexFlatIP(dimensions)
+        self._index: faiss.Index = faiss.IndexFlatIP(dimensions)
         self._mappings: list[_Mapping] = []
         self._load_if_present()
 
