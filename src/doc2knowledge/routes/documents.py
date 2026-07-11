@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, cast
 
+from anyio import CapacityLimiter, to_thread
 from fastapi import (
     APIRouter,
     File,
@@ -14,6 +15,7 @@ from fastapi import (
 )
 from pydantic import BaseModel, ConfigDict
 
+from doc2knowledge.config import Settings
 from doc2knowledge.domain import Document, DocumentStatus
 from doc2knowledge.ingestion.extractors import (
     EmptyDocumentError,
@@ -23,6 +25,7 @@ from doc2knowledge.ingestion.extractors import (
 from doc2knowledge.ingestion.service import IngestionService, UploadTooLargeError
 
 router = APIRouter(prefix="/documents", tags=["documents"])
+_UPLOAD_READ_CHUNK_BYTES = 1024 * 1024
 
 
 class DocumentResponse(BaseModel):
@@ -47,6 +50,28 @@ def _service(request: Request) -> IngestionService:
     return cast(IngestionService, request.app.state.ingestion_service)
 
 
+def _settings(request: Request) -> Settings:
+    return cast(Settings, request.app.state.settings)
+
+
+def _limiter(request: Request) -> CapacityLimiter:
+    return cast(CapacityLimiter, request.app.state.processing_limiter)
+
+
+async def _read_upload_limited(file: UploadFile, max_bytes: int) -> bytes:
+    data = bytearray()
+    while True:
+        remaining = max_bytes - len(data)
+        chunk = await file.read(min(_UPLOAD_READ_CHUNK_BYTES, remaining + 1))
+        if not chunk:
+            return bytes(data)
+        data.extend(chunk)
+        if len(data) > max_bytes:
+            raise UploadTooLargeError(
+                f"upload contains more than {max_bytes} bytes; limit is {max_bytes}"
+            )
+
+
 def _response(document: Document) -> DocumentResponse:
     return DocumentResponse.model_validate(document)
 
@@ -57,12 +82,14 @@ async def upload_document(
     response: Response,
     file: Annotated[UploadFile, File()],
 ) -> UploadResponse:
-    data = await file.read()
     try:
-        result = _service(request).ingest(
-            filename=file.filename or "document",
-            media_type=file.content_type or "application/octet-stream",
-            data=data,
+        data = await _read_upload_limited(file, _settings(request).max_upload_bytes)
+        result = await to_thread.run_sync(
+            _service(request).ingest,
+            file.filename or "document",
+            file.content_type or "application/octet-stream",
+            data,
+            limiter=_limiter(request),
         )
     except UploadTooLargeError as error:
         raise HTTPException(
