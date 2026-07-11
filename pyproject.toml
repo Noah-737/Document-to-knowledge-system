@@ -11,8 +11,10 @@ requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [{ name = "Ujjwal Kumar" }]
 dependencies = [
+    "beautifulsoup4>=4.12,<5",
     "fastapi>=0.115,<1",
     "pydantic-settings>=2.6,<3",
+    "pypdf>=5.1,<6",
     "python-multipart>=0.0.12,<1",
     "uvicorn[standard]>=0.32,<1",
 ]
