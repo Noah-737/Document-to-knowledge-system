@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -41,7 +42,7 @@ def test_repository_persists_documents_chunks_and_deletion(tmp_path: Path) -> No
         ),
     ]
 
-    repository.create_document(document)
+    assert repository.create_document(document) is True
     repository.save_chunks(chunks)
     repository.update_document(
         Document(
@@ -67,3 +68,13 @@ def test_repository_persists_documents_chunks_and_deletion(tmp_path: Path) -> No
     assert reopened.get_document(document.id) is None
     assert reopened.get_chunks(document.id) == []
     assert reopened.delete_document(document.id) is False
+
+
+def test_repository_atomically_rejects_a_duplicate_content_hash(tmp_path: Path) -> None:
+    repository = MetadataRepository(tmp_path / "metadata.sqlite3")
+    original = make_document()
+    duplicate = replace(original, id="doc-2", filename="renamed.txt")
+
+    assert repository.create_document(original) is True
+    assert repository.create_document(duplicate) is False
+    assert repository.get_document_by_hash(original.sha256) == original

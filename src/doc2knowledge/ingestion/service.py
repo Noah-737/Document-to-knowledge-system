@@ -76,7 +76,12 @@ class IngestionService:
             chunk_count=0,
             error_message=None,
         )
-        self._repository.create_document(document)
+        if not self._repository.create_document(document):
+            duplicate = self._repository.get_document_by_hash(content_hash)
+            if duplicate is None:
+                raise RuntimeError("document hash was claimed but could not be loaded")
+            return IngestionResult(document=duplicate, duplicate=True)
+
         document_dir = self._documents_dir / document.id
         document_dir.mkdir(parents=True, exist_ok=False)
         (document_dir / "source").write_bytes(data)
