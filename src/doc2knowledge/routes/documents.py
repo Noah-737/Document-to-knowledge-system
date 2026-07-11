@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import cast
+from typing import Annotated, cast
 
 from anyio import CapacityLimiter, to_thread
 from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFile, status
@@ -58,7 +58,7 @@ def _response(document: Document) -> DocumentResponse:
 async def upload_document(
     request: Request,
     response: Response,
-    file: UploadFile = File(...),
+    file: Annotated[UploadFile, File()],
 ) -> UploadResponse:
     data = await file.read()
     try:
