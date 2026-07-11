@@ -6,9 +6,12 @@ from doc2knowledge import __version__
 from doc2knowledge.config import Settings
 from doc2knowledge.embeddings.base import EmbeddingService
 from doc2knowledge.embeddings.mixedbread import MixedbreadEmbeddingService
+from doc2knowledge.generation.base import GenerationService
+from doc2knowledge.generation.gemma import GemmaGenerationService
 from doc2knowledge.ingestion.service import IngestionService
 from doc2knowledge.retrieval.service import RetrievalService
 from doc2knowledge.routes.documents import router as documents_router
+from doc2knowledge.routes.query import router as query_router
 from doc2knowledge.routes.search import router as search_router
 from doc2knowledge.storage.metadata import MetadataRepository
 from doc2knowledge.storage.vectors import VectorRepository
@@ -19,6 +22,7 @@ def create_app(
     *,
     embedding_service: EmbeddingService | None = None,
     vector_repository: VectorRepository | None = None,
+    generation_service: GenerationService | None = None,
 ) -> FastAPI:
     """Create a configured FastAPI application."""
 
@@ -32,6 +36,14 @@ def create_app(
         resolved_settings.data_dir / "vectors",
         model_name=embeddings.model_name,
         dimensions=embeddings.dimensions,
+    )
+    generation = generation_service or GemmaGenerationService(
+        api_key=(
+            resolved_settings.gemini_api_key.get_secret_value()
+            if resolved_settings.gemini_api_key is not None
+            else None
+        ),
+        model_name=resolved_settings.llm_model,
     )
     ingestion_service = IngestionService(
         metadata,
@@ -53,8 +65,10 @@ def create_app(
     app.state.vector_repository = vectors
     app.state.ingestion_service = ingestion_service
     app.state.retrieval_service = retrieval_service
+    app.state.generation_service = generation
     app.include_router(documents_router)
     app.include_router(search_router)
+    app.include_router(query_router)
 
     @app.get("/health", tags=["system"])
     def health() -> dict[str, str]:
