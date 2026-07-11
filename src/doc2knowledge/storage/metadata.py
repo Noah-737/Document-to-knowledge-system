@@ -53,14 +53,17 @@ class MetadataRepository:
                 """
             )
 
-    def create_document(self, document: Document) -> None:
+    def create_document(self, document: Document) -> bool:
+        """Atomically claim a content hash, returning False when it already exists."""
+
         with self._connect() as connection:
-            connection.execute(
+            cursor = connection.execute(
                 """
                 INSERT INTO documents (
                     id, filename, media_type, sha256, status,
                     created_at, chunk_count, error_message
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(sha256) DO NOTHING
                 """,
                 (
                     document.id,
@@ -73,6 +76,7 @@ class MetadataRepository:
                     document.error_message,
                 ),
             )
+        return cursor.rowcount > 0
 
     def update_document(self, document: Document) -> None:
         with self._connect() as connection:
