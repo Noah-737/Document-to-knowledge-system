@@ -1,35 +1,60 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=75", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "doc2knowledge"
-version = "0.0.0-dev"
-description = "A project to convert documentation into a knowledge base."
+version = "0.1.0"
+description = "Document ingestion, retrieval, and grounded question answering."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+authors = [{ name = "Ujjwal Kumar" }]
+dependencies = [
+    "fastapi>=0.115,<1",
+    "pydantic-settings>=2.6,<3",
+    "python-multipart>=0.0.12,<1",
+    "uvicorn[standard]>=0.32,<1",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "ruff",
+    "build>=1.2,<2",
+    "httpx>=0.27,<1",
+    "mypy>=1.13,<2",
+    "pytest>=8.3,<9",
+    "pytest-cov>=6,<7",
+    "ruff>=0.8,<1",
 ]
+
+[project.scripts]
+doc2knowledge = "doc2knowledge.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["doc2knowledge*"]
 
 [tool.ruff]
-line-length = 88
+line-length = 100
+target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "UP"]
-ignore = ["E501"] # Handled by ruff format
+select = ["E", "F", "I", "UP", "B", "SIM"]
 
-[tool.ruff.lint.isort]
-known-first-party = ["src"]
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["doc2knowledge"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.coverage.run]
+source = ["doc2knowledge"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_covered = true
