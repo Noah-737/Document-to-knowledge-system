@@ -64,8 +64,7 @@ class MixedbreadEmbeddingService:
         array = np.asarray(encoded, dtype=np.float32)
         if array.ndim != 2 or array.shape != (len(texts), self._dimensions):
             raise ValueError(
-                "embedding model returned unexpected document dimensions: "
-                f"{array.shape}"
+                f"embedding model returned unexpected document dimensions: {array.shape}"
             )
         return [[float(value) for value in row] for row in array]
 
@@ -80,10 +79,7 @@ class MixedbreadEmbeddingService:
         )
         array = np.asarray(encoded, dtype=np.float32).reshape(-1)
         if array.shape != (self._dimensions,):
-            raise ValueError(
-                "embedding model returned unexpected query dimensions: "
-                f"{array.shape}"
-            )
+            raise ValueError(f"embedding model returned unexpected query dimensions: {array.shape}")
         return [float(value) for value in array]
 
     def _encoder(self) -> SentenceEncoder:
