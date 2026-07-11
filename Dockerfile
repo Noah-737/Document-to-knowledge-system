@@ -1,12 +1,20 @@
 FROM python:3.11-slim
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
 WORKDIR /app
 
-# Copy project files
-COPY . .
+RUN addgroup --system app && adduser --system --ingroup app app
 
-# Install dependencies
-RUN pip install --upgrade pip
-RUN pip install -e ".[dev]"
+COPY pyproject.toml README.md LICENSE ./
+COPY src ./src
+RUN python -m pip install --upgrade pip && python -m pip install .
 
-# This image is for build-time checks, no entrypoint needed.
+RUN mkdir -p /app/data && chown -R app:app /app
+USER app
+
+EXPOSE 8000
+
+CMD ["uvicorn", "doc2knowledge.api:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
