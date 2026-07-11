@@ -27,7 +27,17 @@ jobs:
       - name: Type check
         run: mypy src
       - name: Test
-        run: pytest -q --cov=doc2knowledge --cov-report=term-missing
+        shell: bash
+        run: |
+          set -o pipefail
+          pytest -q --cov=doc2knowledge --cov-report=term-missing 2>&1 | tee pytest-output.txt
+      - name: Upload pytest output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-output
+          path: pytest-output.txt
+          if-no-files-found: ignore
       - name: Build package
         run: python -m build
 

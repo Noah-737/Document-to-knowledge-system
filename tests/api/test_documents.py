@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 from doc2knowledge.api import create_app
 from doc2knowledge.config import Settings
+from tests.fakes import FakeEmbeddingService
 
 
 def make_client(tmp_path: Path, max_upload_bytes: int = 1024) -> TestClient:
@@ -12,7 +13,10 @@ def make_client(tmp_path: Path, max_upload_bytes: int = 1024) -> TestClient:
             Settings(
                 data_dir=tmp_path,
                 max_upload_bytes=max_upload_bytes,
-            )
+                embedding_model="test-model",
+                embedding_dimensions=3,
+            ),
+            embedding_service=FakeEmbeddingService(),
         )
     )
 
