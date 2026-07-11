@@ -90,4 +90,4 @@ class MixedbreadEmbeddingService:
                         self._model_name,
                         self._dimensions,
                     )
-        return cast(SentenceEncoder, self._model)
+        return self._model
