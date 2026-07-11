@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import time
+from collections.abc import Awaitable, Callable
 from contextvars import ContextVar, Token
 from datetime import UTC, datetime
 from typing import Any
@@ -57,7 +58,10 @@ def install_request_observability(app: FastAPI) -> None:
     logger = configure_logging()
 
     @app.middleware("http")
-    async def request_observability(request: Request, call_next: Any) -> Response:
+    async def request_observability(
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
         request_id = _resolve_request_id(request)
         token: Token[str | None] = _request_id.set(request_id)
         started = time.perf_counter()
