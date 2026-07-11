@@ -12,6 +12,8 @@ from doc2knowledge.generation.prompt import (
     resolve_citations,
 )
 
+_ABSTENTION_TEXT = "There is not enough evidence in the indexed documents to answer."
+
 
 class GenerationNotConfiguredError(RuntimeError):
     pass
@@ -61,7 +63,7 @@ class GemmaGenerationService(GenerationService):
     def generate(self, question: str, evidence: list[RetrievedChunk]) -> Answer:
         if not evidence:
             return Answer(
-                text="There is not enough evidence in the indexed documents to answer.",
+                text=_ABSTENTION_TEXT,
                 citations=[],
                 evidence=[],
             )
@@ -91,7 +93,7 @@ class GemmaGenerationService(GenerationService):
                 "generated answer contained an invalid citation"
             ) from error
 
-        abstention = "not enough evidence" in text.lower()
+        abstention = text == _ABSTENTION_TEXT
         if not citations and not abstention:
             raise GenerationProviderError("generated answer did not cite supplied evidence")
         return Answer(text=text, citations=citations, evidence=evidence)
