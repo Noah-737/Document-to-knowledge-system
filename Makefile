@@ -1,22 +1,30 @@
-.PHONY: help install test lint docker-build
-
-help:
-	@echo "Commands:"
-	@echo "  install       : Install dependencies."
-	@echo "  test          : Run tests."
-	@echo "  lint          : Run linter and formatter checks."
-	@echo "  docker-build  : Build the Docker image."
+.PHONY: install run test lint format typecheck build docker-build check
 
 install:
-	pip install --upgrade pip
-	pip install -e ".[dev]"
+	python -m pip install --upgrade pip
+	python -m pip install -e ".[dev]"
+
+run:
+	python -m doc2knowledge
 
 test:
-	pytest -q tests/
+	pytest -q --cov=doc2knowledge --cov-report=term-missing
 
 lint:
 	ruff check .
 	ruff format --check .
 
+format:
+	ruff check --fix .
+	ruff format .
+
+typecheck:
+	mypy src
+
+build:
+	python -m build
+
 docker-build:
-	docker build -t doc2knowledge .
+	docker build -t doc2knowledge:local .
+
+check: lint typecheck test build docker-build
