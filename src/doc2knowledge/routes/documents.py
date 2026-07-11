@@ -7,6 +7,7 @@ from anyio import CapacityLimiter, to_thread
 from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFile, status
 from pydantic import BaseModel, ConfigDict
 
+from doc2knowledge.config import Settings
 from doc2knowledge.domain import Document, DocumentStatus
 from doc2knowledge.ingestion.extractors import (
     EmptyDocumentError,
@@ -41,7 +42,12 @@ def _service(request: Request) -> IngestionService:
 
 
 def _limiter(request: Request) -> CapacityLimiter:
-    return cast(CapacityLimiter, request.app.state.processing_limiter)
+    limiter = request.app.state.processing_limiter
+    if limiter is None:
+        settings = cast(Settings, request.app.state.settings)
+        limiter = CapacityLimiter(settings.processing_workers)
+        request.app.state.processing_limiter = limiter
+    return cast(CapacityLimiter, limiter)
 
 
 def _response(document: Document) -> DocumentResponse:
