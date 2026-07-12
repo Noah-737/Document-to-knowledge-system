@@ -8,6 +8,19 @@
 
 **Tech Stack:** Python 3.11+, FastAPI, Pydantic Settings, SQLAlchemy/SQLite, sentence-transformers, FAISS CPU, google-genai, pytest, Ruff, mypy, coverage, Docker, GitHub Actions.
 
+## Implementation status
+
+The initial service scope was completed on 2026-07-11 through merged changes #12-#16.
+Tasks 1-7 are implemented with deterministic tests. Task 8 delivered bounded processing,
+request IDs, structured logging, readiness reporting, and atomic concurrent deduplication;
+OCR remains deferred. Task 9 delivered the evaluation library, CLI, tests, example question
+schema, and operating documentation; a real benchmark corpus remains user-supplied.
+
+Deferred follow-ups are scanned-PDF OCR, background job orchestration, provider retries and
+model/API metrics, hybrid retrieval or reranking, and a versioned real-world benchmark corpus.
+They are not part of the documented 0.1.0 feature set.
+
+
 ## Global Constraints
 
 - Default embedding model: `mixedbread-ai/mxbai-embed-large-v1`.

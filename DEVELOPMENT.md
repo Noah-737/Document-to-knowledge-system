@@ -1,27 +1,72 @@
 # Development Guide
 
-This guide provides instructions for setting up your development environment.
+## Prerequisites
+
+- Python 3.11 or newer
+- `make`
+- Docker, only for the container build check
+
+The default test suite uses fake embedding and generation services. It does not download a
+model, call an external API, or require `GEMINI_API_KEY`.
 
 ## Setup
 
-1.  **Prerequisites**
-    - Python 3.11
-    - `make`
+```bash
+git clone https://github.com/Noah-737/Document-to-knowledge-system.git
+cd Document-to-knowledge-system
+make install
+```
 
-2.  **Clone the repository and install dependencies**
-    ```bash
-    git clone https://github.com/your-username/doc2knowledge.git
-    cd doc2knowledge
-    make install
-    ```
+## Run locally
 
-## Running checks
+```bash
+make run
+```
 
--   **Run tests:** `make test`
--   **Run linter and formatter:** `make lint`
+The API listens on `http://localhost:8000`. Check it with:
 
-## Docker
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/ready
+```
 
-You can also build the docker image and run commands inside the container.
+Set `GEMINI_API_KEY` before using `/query`. Ingestion and `/search` work without it.
 
--   **Build the image:** `make docker-build`
+## Development checks
+
+Run individual checks while iterating:
+
+```bash
+make lint
+make typecheck
+make test
+make build
+make docker-build
+```
+
+Run the complete CI-equivalent suite before committing:
+
+```bash
+make check
+```
+
+`make check` runs Ruff lint and format checks, strict mypy, pytest with branch coverage and
+an 85% minimum, a Python package build, and a Docker image build.
+
+To apply Ruff's safe fixes and formatting:
+
+```bash
+make format
+```
+
+## Retrieval evaluation
+
+Copy the example question set, replace it with questions for a stable ingested corpus, start
+the service, and run the evaluator:
+
+```bash
+cp eval/questions.example.json eval/questions.json
+python scripts/evaluate_retrieval.py eval/questions.json --k 6
+```
+
+See `README.md` for the API workflow, configuration, Docker usage, and metric definitions.
